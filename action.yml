@@ -1,0 +1,110 @@
+# https://help.github.com/en/articles/metadata-syntax-for-github-actions
+name: Deploy Stremio addons to Beamup
+description: |
+  Deploy Stremio addons to Beamup.
+  
+  This action deploys your project to a Beamup server. You can provide configuration via environment variables or as action inputs. Environment variables take precedence if both are set.
+
+author: Stremio
+run-name: Deploy to Beamup by @${{ github.actor }}
+
+on:
+  workflow_dispatch:
+  release:
+    types: [published]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Validate secrets
+        run: |
+          if [ -z "${{ secrets.SSH_PRIVATE_KEY }}" ]; then
+            echo "Error: SSH_PRIVATE_KEY secret is not set"
+            exit 1
+          fi
+          if [ -z "${{ secrets.BEAMUP_HOST }}" ]; then
+            echo "Error: BEAMUP_HOST secret is not set"
+            exit 1
+          fi
+          if [ -z "${{ secrets.USERNAME_GITHUB }}" ]; then
+            echo "Error: USERNAME_GITHUB secret is not set"
+            exit 1
+          fi
+          if [ -z "${{ secrets.PROJECT_NAME }}" ]; then
+            echo "Error: PROJECT_NAME secret is not set"
+            exit 1
+          fi
+          echo "All required secrets are configured ✓"
+      
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+        
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          
+          eval "$(ssh-agent -s)"
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" | ssh-add -
+
+          # Add the sync-github-keys private key
+          echo "-----BEGIN OPENSSH PRIVATE KEY-----
+          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
+          -----END OPENSSH PRIVATE KEY-----" > ~/.ssh/sync_key
+          chmod 600 ~/.ssh/sync_key
+          
+          ssh-keyscan -H ${{ secrets.BEAMUP_HOST }} >> ~/.ssh/known_hosts
+      
+      - name: Sync GitHub keys with Beamup
+        run: |
+          ssh -i ~/.ssh/sync_key dokku@${{ secrets.BEAMUP_HOST }} sync-github-keys ${{ secrets.USERNAME_GITHUB }}
+
+      - name: Generate username hash
+        id: hash
+        run: |
+          # Convert username to lowercase and add newline, then hash
+          GITHUB_USER_HASHED=$(echo "${{ secrets.USERNAME_GITHUB }}" | awk '{print tolower($0)}' | shasum -a 256 | cut -c1-12 )
+          echo "username_hashed=${GITHUB_USER_HASHED}" >> $GITHUB_OUTPUT
+          echo "Generated username hash: ${GITHUB_USER_HASHED}"
+          
+      - name: Configure Git and Deploy
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          
+          git remote add beamup dokku@${{ secrets.BEAMUP_HOST }}:${{ steps.hash.outputs.username_hashed }}/${{ secrets.PROJECT_NAME }} || true
+          git push beamup HEAD:master --force
+          
+      - name: Cleanup
+        if: always()
+        run: |
+          rm -f ~/.ssh/id_rsa
+          rm -f ~/.ssh/sync_key
