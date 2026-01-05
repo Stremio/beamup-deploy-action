@@ -1,9 +1,7 @@
 # https://help.github.com/en/articles/metadata-syntax-for-github-actions
 name: Deploy Stremio addons to Beamup
 description: |
-  Deploy Stremio addons to Beamup.
-  
-  This action deploys your project to a Beamup server. You can provide configuration via environment variables or as action inputs. Environment variables take precedence if both are set.
+  Deploy Stremio addons to Beamup. Configure via env vars or inputs; env vars take precedence.
 
 author: Stremio
 run-name: Deploy to Beamup by @${{ github.actor }}
