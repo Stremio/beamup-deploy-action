@@ -35,6 +35,7 @@ This workflow can be triggered manually (via the GitHub Actions UI) or automatic
 
 ```yaml
 name: Deploy to Beamup
+run-name: Deploy to Beamup by @${{ github.actor }}
 
 on:
   push:
@@ -58,7 +59,30 @@ jobs:
           project_name: ${{ secrets.PROJECT_NAME }}
 ```
 
-If you are using this action in the same repository, replace `uses: your-org/beamup-deploy-action@v1` with `uses: ./`.
+You can map inputs from either `secrets` or `env` values. For example:
+
+```yaml
+env:
+  SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+  BEAMUP_HOST: ${{ vars.BEAMUP_HOST }}
+  USERNAME_GITHUB: ${{ vars.USERNAME_GITHUB }}
+  PROJECT_NAME: ${{ vars.PROJECT_NAME }}
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy
+        uses: Stremio/beamup-deploy-action@v1.0.1
+        with:
+          ssh_private_key: ${{ secrets.SSH_PRIVATE_KEY }}
+          beamup_host: ${{ env.BEAMUP_HOST }}
+          username_github: ${{ env.USERNAME_GITHUB }}
+          project_name: ${{ env.PROJECT_NAME }}
+```
+NOTE: `SSH_PRIVATE_KEY` should be always used in `secrets`
+
+For a ready-to-use workflow file, see [`example.yml`](./example.yml).
 
 See [`action.yml`](./action.yml) for the complete input/output contract.
 

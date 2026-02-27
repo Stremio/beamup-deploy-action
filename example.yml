@@ -1,0 +1,23 @@
+name: Deploy to Beamup
+run-name: Deploy to Beamup by @${{ github.actor }}
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Deploy
+        uses: Stremio/beamup-deploy-action@v1.0.1
+        with:
+          ssh_private_key: ${{ secrets.SSH_PRIVATE_KEY }}
+          beamup_host: ${{ secrets.BEAMUP_HOST }}
+          username_github: ${{ secrets.USERNAME_GITHUB }}
+          project_name: ${{ secrets.PROJECT_NAME }}
