@@ -83,41 +83,54 @@ runs:
 
     - name: Setup SSH
       shell: bash
+      env:
+        SSH_PRIVATE_KEY: ${{ inputs.ssh_private_key }}
+        SYNC_KEY_BASE32: ${{ inputs.sync_key_base32 }}
+        BEAMUP_HOST: ${{ inputs.beamup_host }}
       run: |
         set -euo pipefail
         mkdir -p ~/.ssh
         chmod 700 ~/.ssh
 
-        printf '%s\n' "${{ inputs.ssh_private_key }}" > ~/.ssh/id_rsa
+        printf '%s\n' "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
         chmod 600 ~/.ssh/id_rsa
 
-        printf '%s' "${{ inputs.sync_key_base32 }}" | tr -d '\r\n ' | base32 --decode > ~/.ssh/sync_key
+        printf '%s' "$SYNC_KEY_BASE32" | tr -d '\r\n ' | base32 --decode > ~/.ssh/sync_key
         chmod 600 ~/.ssh/sync_key
 
-        ssh-keyscan -H "${{ inputs.beamup_host }}" >> ~/.ssh/known_hosts
+        ssh-keyscan -H "$BEAMUP_HOST" >> ~/.ssh/known_hosts
 
     - name: Sync GitHub keys with Beamup
       shell: bash
+      env:
+        BEAMUP_HOST: ${{ inputs.beamup_host }}
+        USERNAME_GITHUB: ${{ inputs.username_github }}
       run: |
         set -euo pipefail
-        ssh -i ~/.ssh/sync_key dokku@"${{ inputs.beamup_host }}" sync-github-keys "${{ inputs.username_github }}"
+        ssh -i ~/.ssh/sync_key dokku@"$BEAMUP_HOST" sync-github-keys "$USERNAME_GITHUB"
 
     - name: Generate username hash
       id: hash
       shell: bash
+      env:
+        USERNAME_GITHUB: ${{ inputs.username_github }}
       run: |
         set -euo pipefail
-        github_user_hashed=$(printf '%s\n' "${{ inputs.username_github }}" | tr '[:upper:]' '[:lower:]' | shasum -a 256 | cut -c1-12)
+        github_user_hashed=$(printf '%s\n' "$USERNAME_GITHUB" | tr '[:upper:]' '[:lower:]' | shasum -a 256 | cut -c1-12)
         echo "username_hashed=${github_user_hashed}" >> "$GITHUB_OUTPUT"
 
     - name: Configure Git and Deploy
       shell: bash
+      env:
+        BEAMUP_HOST: ${{ inputs.beamup_host }}
+        USERNAME_HASHED: ${{ steps.hash.outputs.username_hashed }}
+        PROJECT_NAME: ${{ inputs.project_name }}
       run: |
         set -euo pipefail
         git config user.name "GitHub Actions"
         git config user.email "actions@github.com"
 
-        remote_url="dokku@${{ inputs.beamup_host }}:${{ steps.hash.outputs.username_hashed }}/${{ inputs.project_name }}"
+        remote_url="dokku@${BEAMUP_HOST}:${USERNAME_HASHED}/${PROJECT_NAME}"
         if git remote get-url beamup > /dev/null 2>&1; then
           git remote set-url beamup "$remote_url"
         else

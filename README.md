@@ -33,7 +33,34 @@ The following secrets must be set in your repository:
 
 This workflow can be triggered manually (via the GitHub Actions UI) or automatically when a new release is published.
 
-See [`action.yml`](./action.yml) for the full workflow logic.
+```yaml
+name: Deploy to Beamup
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Deploy
+        uses: Stremio/beamup-deploy-action@v1.0.1
+        with:
+          ssh_private_key: ${{ secrets.SSH_PRIVATE_KEY }}
+          beamup_host: ${{ secrets.BEAMUP_HOST }}
+          username_github: ${{ secrets.USERNAME_GITHUB }}
+          project_name: ${{ secrets.PROJECT_NAME }}
+```
+
+If you are using this action in the same repository, replace `uses: your-org/beamup-deploy-action@v1` with `uses: ./`.
+
+See [`action.yml`](./action.yml) for the complete input/output contract.
 
 ## Security assumptions
 
