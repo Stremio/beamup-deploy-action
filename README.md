@@ -49,6 +49,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Deploy
         uses: Stremio/beamup-deploy-action@v1.0.1
@@ -72,6 +74,11 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
       - name: Deploy
         uses: Stremio/beamup-deploy-action@v1.0.1
         with:
