@@ -26,14 +26,22 @@ The following secrets must be set in your repository:
 
 - `SSH_PRIVATE_KEY`: The private SSH key for deployment (required)
 - `BEAMUP_HOST`: The Beamup server hostname (required)
-- `USERNAME_GITHUB`: Your GitHub username (required)
 - `PROJECT_NAME`: The name of your project on Beamup (required)
+- `USERNAME_GITHUB`: Your GitHub username (required)
 
 ## Usage
 
 This workflow can be triggered manually (via the GitHub Actions UI) or automatically when a new release is published.
 
 See [`action.yml`](./action.yml) for the full workflow logic.
+
+## Security assumptions
+
+This action intentionally relies on the following assumptions:
+
+- `sync_key_base32` default is globally distributed and is not treated as a secret.
+- Beamup host keys are bootstrapped with `ssh-keyscan` (no fingerprint pinning in this action).
+- Deployment always force-pushes `HEAD:master`.
 
 ## License
 
